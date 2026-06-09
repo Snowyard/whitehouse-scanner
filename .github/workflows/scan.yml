@@ -1,0 +1,26 @@
+name: scan
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'   # every 10 minutes (GitHub may delay a few min)
+  workflow_dispatch:          # allows manual "Run workflow" button
+
+concurrency:
+  group: scan
+  cancel-in-progress: false   # never kill a run mid-parse
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - run: node src/index.js
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
