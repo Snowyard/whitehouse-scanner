@@ -35,6 +35,22 @@ function filedDateFromTitle(title) {
   return `${yr}-${String(mo).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
+// ".../wp-content/uploads/2026/04/..." -> "2026-04-01"
+function uploadMonthFromUrl(url) {
+  const m = (url || '').match(/\/uploads\/(\d{4})\/(\d{2})\//);
+  return m ? `${m[1]}-${m[2]}-01` : null;
+}
+
+// Trust the title date — UNLESS it's missing or in the future. The WH page has
+// occasional typos (e.g. "08.27.26" on a filing actually uploaded April 2026).
+// In that case fall back to the PDF's upload month from the URL path.
+function safeFiledDate(title, url) {
+  const fromTitle = filedDateFromTitle(title);
+  const today = new Date().toISOString().slice(0, 10);
+  if (fromTitle && fromTitle <= today) return fromTitle;
+  return uploadMonthFromUrl(url); // typo/missing -> upload month (null only if URL has no date)
+}
+
 function slugify(name) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
@@ -66,7 +82,7 @@ async function insertFiling({ officialId, url, title, rawText }) {
     .insert({
       official_id: officialId,
       source_url: url,
-      filed_date: filedDateFromTitle(title),
+      filed_date: safeFiledDate(title, url),
       raw_text: rawText,
       processed: false
     })
@@ -119,5 +135,6 @@ module.exports = {
   markProcessed,
   deleteFiling,
   officialFromTitle,
-  filedDateFromTitle
+  filedDateFromTitle,
+  safeFiledDate
 };
