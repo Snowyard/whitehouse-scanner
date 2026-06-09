@@ -2,7 +2,8 @@ name: scan
 
 on:
   schedule:
-    - cron: '*/10 * * * *'   # every 10 minutes (GitHub may delay a few min)
+    - cron: '*/30 * * * *'   # every 30 minutes — fits the free private-repo minute budget
+                              # (filings lag the trade by weeks, so this is plenty fast)
   workflow_dispatch:          # allows manual "Run workflow" button
 
 concurrency:
